@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Comic Sans MS',Arial,sans-serif}
+  body{background:#8fd3f4;display:flex;justify-content:center;height:100vh}
+  .app{width:100%;max-width:500px;background:#eaf7ff;display:flex;flex-direction:column;height:100vh;box-shadow:0 0 30px rgba(0,0,0,.2);overflow:hidden;position:relative}
+  .header{background:#2a6df4;color:white;padding:12px;display:flex;align-items:center;gap:10px}
+  .logo{width:48px;height:48px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;border:3px solid #ff9f1c;flex-shrink:0}
+  .header b{font-size:19px;display:block}
+  .header small{font-size:12px;opacity:.9}
+  .iconbtn{background:rgba(255,255,255,.2);border:none;color:white;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:18px}
+  #chat{flex:1;overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;gap:8px;align-items:flex-end;max-width:88%}
+  .row.mine{align-self:flex-end;flex-direction:row-reverse}
+  .row.theirs{align-self:flex-start}
+  .dog{width:36px;height:36px;background:white;border:2px solid #ff9f1c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .me-ico{width:36px;height:36px;background:#2a6df4;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .bubble{padding:11px 14px;font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .theirs .bubble{background:white;border-radius:18px 18px 18px 4px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+  .mine .bubble{background:#2a6df4;color:white;border-radius:18px 18px 4px 18px}
+  .bubble img{max-width:100%;border-radius:12px;margin-top:8px;display:block}
+  .genImg{max-width:100%;border-radius:14px;margin-top:8px;border:3px solid #ff9f1c}
+  .genVideo{max-width:100%;border-radius:14px;margin-top:8px;border:3px solid #2a6df4}
+  .dlBtn{background:#2a6df4;color:white;border:none;padding:9px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:bold;margin:6px 4px 0 0}
+  .dlBtn.green{background:#00c853}
+  .empty{text-align:center;margin:auto;color:#5a8ab0}
+  .empty .big{font-size:60px}
+  .empty h2{color:#2a6df4}
+  .bottom{background:white;padding:10px;display:flex;gap:8px;align-items:center;border-top:2px solid #cceeff}
+  input{flex:1;padding:13px 16px;border-radius:25px;border:2px solid #2a6df4;outline:none;font-size:15px}
+  .sendbtn{background:#ff9f1c;border:none;width:48px;height:48px;border-radius:50%;color:white;font-size:20px;cursor:pointer;flex-shrink:0}
+  .micbtn{background:#eee;border:none;width:48px;height:48px;border-radius:50%;font-size:20px;cursor:pointer;flex-shrink:0}
+  .micbtn.listening{background:#ff3b30;color:white;animation:pulse 1s infinite}
+  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .plusbtn{background:#eaf2ff;border:2px dashed #2a6df4;width:48px;height:48px;border-radius:50%;font-size:24px;cursor:pointer;flex-shrink:0;color:#2a6df4}
+  .attachPreview{background:white;padding:8px 10px;display:none;gap:8px;align-items:center;border-top:2px solid #cceeff}
+  .attachPreview.show{display:flex}
+  .attachPreview img{width:60px;height:60px;object-fit:cover;border-radius:10px}
+  .plusMenu{position:absolute;bottom:75px;left:12px;background:white;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:8px;display:none;z-index:60;width:240px}
+  .plusMenu.show{display:block}
+  .plusMenu button{width:100%;text-align:left;padding:12px;border:none;background:white;cursor:pointer;font-size:14px;border-radius:10px;display:flex;gap:10px;align-items:center}
+  .plusMenu button:hover{background:#eaf2ff}
+  .settings{position:absolute;top:0;right:0;left:0;bottom:0;background:rgba(0,0,0,.5);display:none;z-index:30;align-items:flex-end;justify-content:center}
+  .settings.open{display:flex}
+  .sheet{background:white;width:100%;border-radius:20px 20px 0 0;padding:20px;max-height:88%;overflow-y:auto}
+  .sheet h2{color:#2a6df4;margin-bottom:5px}
+  .sheet h3{font-size:14px;color:#ff9f1c;margin:18px 0 5px;border-top:1px solid #eee;padding-top:14px}
+  .sheet label{font-size:13px;color:#666;display:block;margin:12px 0 5px}
+  .sheet input,.sheet select{width:100%;padding:12px;border-radius:12px;border:2px solid #ddd;outline:none;font-size:15px}
+  .sheet button{width:100%;padding:13px;border:none;border-radius:12px;margin-top:10px;font-weight:bold;cursor:pointer;font-size:15px}
+  .save{background:#2a6df4;color:white}
+  .toggle{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #eee}
+  .voicecard{border:2px solid #eee;border-radius:14px;padding:11px;display:flex;gap:10px;align-items:center;margin:6px 0;cursor:pointer}
+  .voicecard.sel{border-color:#2a6df4;background:#eaf2ff}
+  .menu{position:absolute;top:0;left:0;bottom:0;width:82%;max-width:320px;background:white;z-index:40;transform:translateX(-105%);transition:.3s;box-shadow:5px 0 20px rgba(0,0,0,.3);display:flex;flex-direction:column}
+  .menu.open{transform:translateX(0)}
+  .menuHead{background:#2a6df4;color:white;padding:18px}
+  .menuSearch{padding:12px;border-bottom:1px solid #eee}
+  .menuSearch input{width:100%;padding:11px;border-radius:12px;border:2px solid #ddd}
+  .menuList{flex:1;overflow-y:auto;padding:10px}
+  .histItem{padding:12px;border-radius:12px;border:1px solid #eee;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .histItem.active{background:#eaf2ff;border-color:#2a6df4}
+  .delBtn{background:#ffe8e8;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px}
+  .menuFoot{padding:12px;border-top:1px solid #eee}
+  .overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:none;z-index:35}
+  .overlay.show{display:block}
+  .blueball{position:absolute;right:16px;bottom:90px;width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #7cc4ff, #2a6df4 45%, #0a2a8a 100%);display:none;align-items:center;justify-content:center;font-size:28px;cursor:grab;z-index:50;box-shadow:0 10px 30px rgba(42,109,244,.6)}
+  .blueball.show{display:flex;animation:floaty 3s ease-in-out infinite}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .blueball.speaking{animation:squeak .5s ease-in-out infinite !important}
+  @keyframes squeak{0%{transform:scale(1,1)}25%{transform:scale(1.25,.75)}50%{transform:scale(.85,1.25)}75%{transform:scale(1.15,.9)}100%{transform:scale(1,1)}}
+  .blueball.listening{animation:squeak .3s ease-in-out infinite !important;background:radial-gradient(circle at 30% 30%, #ff9f9f, #ff3b30 45%, #8a0000 100%)}
+  .ballLabel{position:absolute;right:16px;bottom:170px;background:#111;color:white;padding:6px 10px;border-radius:15px;font-size:11px;display:none;z-index:50}
+  .ballLabel.show{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header"><button class="iconbtn" onclick="toggleMenu(true)">☰</button><div class="logo">🐶</div><div style="flex:1"><b id="appName">BLUEY AI</b><small id="modeLabel">● Chill Mode</small></div><button class="iconbtn" onclick="toggleSettings(true)">⚙️</button><button class="iconbtn" onclick="newChat()">＋</button></div>
+  <div id="chat"></div>
+  <div class="attachPreview" id="attachPreview"><img id="attachImg"><div style="flex:1"><b>📸 Picture attached!</b><br><small>Bluey will see this</small></div><button onclick="clearAttach()" style="background:#ffe8e8;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer">✕</button></div>
+  <div class="plusMenu" id="plusMenu">
+    <button onclick="pickImage()">📸 <span><b>Send Picture</b><br><small>Bluey sees & answers</small></span></button>
+    <button onclick="pickCamera()">📷 <span><b>Take Photo</b><br><small>Camera</small></span></button>
+    <button onclick="askGenerate()">🎨 <span><b>Create Picture</b><br><small>Bluey draws + download</small></span></button>
+    <button onclick="askVideo()">🎬 <span><b>Create Video</b><br><small>Bluey makes video!</small></span></button>
+  </div>
+  <div class="bottom"><button class="plusbtn" onclick="togglePlus()">＋</button><button class="micbtn" id="micBtn" onclick="toggleVoice()">🎤</button><input id="in" placeholder="Ask Bluey anything..." onkeydown="if(event.key==='Enter')send()"><button class="sendbtn" onclick="send()">➤</button></div>
+  <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="onFilePicked(event)">
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="onFilePicked(event)">
+  <div class="ballLabel" id="ballLabel">Tap to talk!</div>
+  <div class="blueball" id="blueBall" onclick="onBallTap()"><span id="ballEmoji">🐶</span></div>
+  <div class="overlay" id="overlay" onclick="toggleMenu(false);togglePlus(false)"></div>
+  <div class="menu" id="sideMenu">
+    <div class="menuHead"><b>☰ Bluey Menu</b><br><small id="menuSub">Your History</small></div>
+    <div class="menuSearch"><input id="searchHist" placeholder="🔍 Search chats..." oninput="renderMenu()"></div>
+    <div class="menuList" id="menuList"></div>
+    <div class="menuFoot"><button onclick="newChat();toggleMenu(false)" style="background:#2a6df4;color:white;width:100%;padding:12px;border:none;border-radius:12px;font-weight:bold;cursor:pointer">＋ New Chat</button><button onclick="clearAll()" style="background:#ffe8e8;color:#d00;width:100%;padding:12px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:8px">🗑️ Delete All Chats</button></div>
+  </div>
+  <div class="settings" id="settingsPanel" onclick="if(event.target===this)toggleSettings(false)">
+    <div class="sheet">
+      <h2>⚙️ Bluey Settings</h2>
+      <label>Your Name</label><input id="setName">
+      <label>Your City</label><input id="setCity">
+      <label>Personality</label><select id="setStyle"><option value="chill">Chill & Smart</option><option value="funny">Funny & Playful</option><option value="teacher">Teacher</option><option value="roast">Roaster</option></select>
+      <h3>🌍 LANGUAGE MODE</h3>
+      <select id="setLang"><option value="none">None</option><option value="Spanish">🇪🇸 Spanish</option><option value="Hindi">🇮🇳 Hindi</option><option value="French">🇫🇷 French</option><option value="Japanese">🇯🇵 Japanese</option><option value="German">🇩🇪 German</option><option value="Korean">🇰🇷 Korean</option><option value="Gujarati">🇮🇳 Gujarati</option><option value="Python">🐍 Python</option><option value="JavaScript">💛 JavaScript</option><option value="Java">☕ Java</option><option value="C++">💻 C++</option><option value="HTML-CSS">🎨 HTML & CSS</option></select>
+      <h3>🎙️ VOICE MODE</h3>
+      <div class="toggle"><span><b>Voice Mode + Blue Ball</b></span><input type="checkbox" id="setVoiceMode" style="width:24px;height:24px"></div>
+      <div id="voiceWarning" style="background:#fff3d6;padding:10px;border-radius:10px;font-size:12px;display:none"></div>
+      <label>Choose Bluey's Voice:</label><div id="voiceList"></div>
+      <button onclick="testVoice()" style="background:#ff9f1c;color:white">▶️ Test Voice</button>
+      <div class="toggle"><span>🎤 Auto-listen</span><input type="checkbox" id="setAuto" style="width:22px;height:22px"></div>
+      <h3>📍 Surroundings</h3>
+      <div class="toggle"><span>Surroundings Aware</span><input type="checkbox" id="setSurround" checked style="width:22px;height:22px"></div>
+      <button class="save" onclick="saveSettings()">Save ✅</button>
+      <button onclick="toggleSettings(false)" style="background:#eee">Close</button>
+      <p style="font-size:12px;color:#999;text-align:center;margin-top:10px">Bluey AI • Created by Kanishk Darshit • Born 14 April 2014</p>
+    </div>
+  </div>
+</div>
+<script>
+const KEY = "AQ.Ab8RN6IZvWEDG9s3XUdxJ2ENcWGLwKh8TZPgRGSIn9qwvUPqRA";
+let chats = JSON.parse(localStorage.getItem('bluey_chats2')||'[]');
+let currentId = localStorage.getItem('bluey_current2')||null;
+let settings = JSON.parse(localStorage.getItem('bluey_settings')||'{}');
+if(!settings.style) settings.style='chill';
+if(!settings.voiceChar) settings.voiceChar='Maple';
+if(settings.voiceMode===undefined) settings.voiceMode=false;
+if(settings.auto===undefined) settings.auto=false;
+if(settings.surround===undefined) settings.surround=true;
+if(!settings.lang) settings.lang='none';
+let attachedImage=null;
+let allVoices=[]; let isSpeaking=false;
+function refreshVoices(){ allVoices=speechSynthesis.getVoices(); let f=allVoices.filter(v=>/female|zira|samantha|aria|jenny|natasha|female/i.test(v.name)); let m=allVoices.filter(v=>/male|david|daniel|guy|george|male/i.test(v.name)); if(f.length===0 && allVoices.length>=2) f=[allVoices[0]]; if(m.length===0 && allVoices.length>=2) m=allVoices.slice(1); return {femalePool:f,malePool:m,total:allVoices.length}; }
+const CHARS=[{id:'Maple',label:'🍁 Maple',type:'GIRL',desc:'Sweet girl',pitch:1.15,rate:1.0},{id:'Luna',label:'🌙 Luna',type:'GIRL',desc:'Calm girl',pitch:1.0,rate:0.95},{id:'Bubbles',label:'👶 Bubbles',type:'GIRL',desc:'Cartoon girl',pitch:1.6,rate:1.2},{id:'Super Robo',label:'🤖 Super Robo',type:'BOY',desc:'Deep robot boy',pitch:0.4,rate:0.85},{id:'Thunder',label:'⚡ Thunder',type:'BOY',desc:'Loud boy',pitch:0.7,rate:1.1},{id:'Shadow',label:'🕶️ Shadow',type:'BOY',desc:'Cool boy',pitch:0.6,rate:0.9}];
+function getCharDef(){return CHARS.find(c=>c.id===settings.voiceChar)||CHARS[0];}
+function pickVoiceForChar(charId){let {femalePool,malePool,total}=refreshVoices();if(total===0)return null;let def=CHARS.find(c=>c.id===charId);if(def.type==='GIRL'){if(charId==='Maple')return femalePool[0];if(charId==='Luna')return femalePool[1%femalePool.length];return femalePool[femalePool.length-1];}else{if(charId==='Super Robo')return malePool[0];if(charId==='Thunder')return malePool[1%malePool.length];return malePool[malePool.length-1];}}
+function renderVoiceList(){let {femalePool,malePool,total}=refreshVoices();let w=document.getElementById('voiceWarning');if(w){if(total<=1){w.style.display='block';w.innerHTML='⚠️ Only '+total+' voice - download more girl voices in phone settings!';}else{w.style.display='block';w.innerHTML='✅ '+total+' voices: '+femalePool.length+' girl, '+malePool.length+' boy';}}document.getElementById('voiceList').innerHTML=CHARS.map(c=>{let v=pickVoiceForChar(c.id);return `<div class="voicecard ${settings.voiceChar===c.id?'sel':''}" onclick="selectChar('${c.id}')"><div style="font-size:26px">${c.label.split(' ')[0]}</div><div><b>${c.label} • ${c.type}</b><br><small>${c.desc} • Real: ${v?v.name.slice(0,22):'...'}</small></div><div style="margin-left:auto">${settings.voiceChar===c.id?'✅':''}</div></div>`;}).join('');}
+function selectChar(id){settings.voiceChar=id;save();renderVoiceList();speak("Hello! I am "+id, true);}
+function testVoice(){speak("Hello! I am "+settings.voiceChar, true);}
+function stopVoice(){speechSynthesis.cancel();isSpeaking=false;setBallState('idle');}
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=()=>{if(document.getElementById('settingsPanel').classList.contains('open'))renderVoiceList();};}
+function save(){localStorage.setItem('bluey_chats2',JSON.stringify(chats));localStorage.setItem('bluey_current2',currentId);localStorage.setItem('bluey_settings',JSON.stringify(settings));}
+function getChat(){return chats.find(c=>c.id===currentId);}
+function newChat(){currentId=Date.now().toString();chats.unshift({id:currentId,title:'New Chat',msgs:[]});save();render();renderMenu();}
+function openChat(id){currentId=id;save();render();renderMenu();toggleMenu(false);}
+function deleteChat(id,e){if(e)e.stopPropagation();if(confirm('Delete this chat?')){chats=chats.filter(c=>c.id!==id);if(currentId===id){currentId=chats[0]?.id||null;if(!currentId)newChat();}save();render();renderMenu();}}
+function clearAll(){if(confirm('Delete ALL?')){chats=[];currentId=null;newChat();toggleMenu(false);}}
+function toggleMenu(open){document.getElementById('sideMenu').classList.toggle('open',open);document.getElementById('overlay').classList.toggle('show',open);if(open)renderMenu();}
+function renderMenu(){let q=(document.getElementById('searchHist').value||'').toLowerCase();let list=chats.filter(c=>c.title.toLowerCase().includes(q)||c.msgs.some(m=>m.text.toLowerCase().includes(q)));document.getElementById('menuSub').textContent=list.length+' chats';document.getElementById('menuList').innerHTML=list.map(c=>`<div class="histItem ${c.id===currentId?'active':''}" onclick="openChat('${c.id}')"><div><b>${c.title}</b><small>${c.msgs.length} messages</small></div><button class="delBtn" onclick="deleteChat('${c.id}',event)">🗑️</button></div>`).join('');}
+function toggleSettings(open){document.getElementById('settingsPanel').classList.toggle('open',open);if(open){document.getElementById('setName').value=settings.name||'';document.getElementById('setCity').value=settings.city||'';document.getElementById('setStyle').value=settings.style;document.getElementById('setLang').value=settings.lang;document.getElementById('setVoiceMode').checked=settings.voiceMode;document.getElementById('setAuto').checked=settings.auto;document.getElementById('setSurround').checked=settings.surround;renderVoiceList();}}
+function saveSettings(){settings.name=document.getElementById('setName').value.trim();settings.city=document.getElementById('setCity').value.trim();settings.style=document.getElementById('setStyle').value;settings.lang=document.getElementById('setLang').value;settings.voiceMode=document.getElementById('setVoiceMode').checked;settings.auto=document.getElementById('setAuto').checked;settings.surround=document.getElementById('setSurround').checked;save();toggleSettings(false);render();}
+function setBallState(s){let b=document.getElementById('blueBall');let l=document.getElementById('ballLabel');if(!settings.voiceMode){b.classList.remove('show','speaking','listening');l.classList.remove('show');return;}b.classList.add('show');l.classList.add('show');b.classList.remove('speaking','listening');if(s==='speaking'){b.classList.add('speaking');document.getElementById('ballEmoji').textContent='🔊';}else if(s==='listening'){b.classList.add('listening');document.getElementById('ballEmoji').textContent='🎤';}else{document.getElementById('ballEmoji').textContent='🐶';}}
+function onBallTap(){if(listening){recog.stop();return;}if(isSpeaking){stopVoice();return;}toggleVoice();}
+function togglePlus(force){let m=document.getElementById('plusMenu');if(force===false){m.classList.remove('show');return;}m.classList.toggle('show');}
+function pickImage(){togglePlus(false);document.getElementById('fileInput').click();}
+function pickCamera(){togglePlus(false);document.getElementById('cameraInput').click();}
+function askGenerate(){togglePlus(false);let p=prompt("🎨 What should Bluey draw?\nExample: A cute dragon flying over Ahmedabad");if(p)generateImage(p);}
+function askVideo(){togglePlus(false);let p=prompt("🎬 What video should Bluey make?\nExample: A dragon flying, A dog dancing");if(p)generateVideo(p);}
+function onFilePicked(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{attachedImage=r.result;document.getElementById('attachImg').src=attachedImage;document.getElementById('attachPreview').classList.add('show');document.getElementById('in').placeholder="Ask about this picture...";document.getElementById('in').focus();};r.readAsDataURL(f);e.target.value='';}
+function clearAttach(){attachedImage=null;document.getElementById('attachPreview').classList.remove('show');document.getElementById('in').placeholder="Ask Bluey anything...";}
+function removeWatermark(imgElement){
+  return new Promise((resolve)=>{
+    let canvas=document.createElement('canvas');
+    let cropH = Math.floor(imgElement.naturalHeight * 0.88);
+    canvas.width = imgElement.naturalWidth;
+    canvas.height = cropH;
+    let ctx=canvas.getContext('2d');
+    ctx.drawImage(imgElement, 0, 0, imgElement.naturalWidth, cropH, 0, 0, canvas.width, canvas.height);
+    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0, cropH-28, 130, 28);
+    ctx.fillStyle='white'; ctx.font='bold 16px Arial'; ctx.fillText('🐶 Bluey AI', 8, cropH-8);
+    resolve(canvas.toDataURL('image/png'));
+  });
+}
+async function downloadImage(url, name){
+  try{
+    let a=document.createElement('a');
+    a.href=url; a.download=(name||'bluey-picture')+'.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    alert('✅ Picture downloaded! Check Gallery / Downloads!');
+  }catch(e){ window.open(url,'_blank'); }
+}
+async function downloadVideo(url, name){
+  try{
+    let res=await fetch(url); let blob=await res.blob();
+    let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(name||'bluey-video')+'.webm';
+    document.body.appendChild(a); a.click(); a.remove();
+    alert('✅ Video downloaded! Check Gallery!');
+  }catch(e){ window.open(url,'_blank'); }
+}
+async function generateImage(prompt){
+  if(!getChat())newChat();let c=getChat();
+  if(c.msgs.length===0)c.title="🎨 "+prompt.slice(0,20);
+  c.msgs.push({role:'user',text:"🎨 Create picture: "+prompt});
+  c.msgs.push({role:'assistant',text:"🎨 Drawing your picture... ⏳",image:'loading'});
+  save();render(); clearAttach();
+  let imgUrl="https://image.pollinations.ai/prompt/"+encodeURIComponent(prompt+", cute, high quality, colorful, detailed")+"?width=512&height=512&seed="+Math.floor(Math.random()*100000)+"&nologo=true";
+  let img=new Image(); img.crossOrigin='anonymous';
+  img.onload=async()=>{
+    let test=document.createElement('canvas'); test.width=10; test.height=10;
+    let tctx=test.getContext('2d'); tctx.drawImage(img,0,0,10,10);
+    let d=tctx.getImageData(0,0,1,1).data;
+    if(d[0]>200 && d[1]>180 && d[2]<100){
+      c.msgs[c.msgs.length-1].text="😭 Free limit! Wait 40 seconds and try again!";
+      c.msgs[c.msgs.length-1].image=null; save(); render(); return;
+    }
+    let cleanImg = await removeWatermark(img);
+    c.msgs[c.msgs.length-1].text="Here is your picture! 🎨✨ Made by Bluey AI!";
+    c.msgs[c.msgs.length-1].image=cleanImg;
+    save();render();renderMenu();
+    if(settings.voiceMode) speak("Here is your picture!");
+  };
+  img.onerror=()=>{ c.msgs[c.msgs.length-1].text="Sorry, picture failed - Wait 40 sec and try again!"; c.msgs[c.msgs.length-1].image=null; save();render(); };
+  img.src=imgUrl;
+}
+async function generateVideo(prompt){
+  if(!getChat())newChat();let c=getChat();
+  if(c.msgs.length===0)c.title="🎬 "+prompt.slice(0,20);
+  c.msgs.push({role:'user',text:"🎬 Create video: "+prompt});
+  c.msgs.push({role:'assistant',text:"🎬 Making your video... Drawing 1 picture only... ⏳", video:'loading'});
+  save();render(); clearAttach();
+  let img=null;
+  for(let attempt=1; attempt<=3; attempt++){
+    try{
+      c.msgs[c.msgs.length-1].text = attempt===1 ? "🎬 Drawing 1 picture for your video... ⏳" : `🎬 Free limit hit! Waiting 45 sec... Retry ${attempt}/3 ⏳ Don't close!`;
+      render();
+      if(attempt>1) await new Promise(r=>setTimeout(r, 45000));
+      let url="https://image.pollinations.ai/prompt/"+encodeURIComponent(prompt+", colorful, high quality, cinematic")+"?width=512&height=512&seed="+Math.floor(Math.random()*100000)+"&nologo=true";
+      img = await new Promise((res, rej)=>{
+        let im=new Image(); im.crossOrigin='anonymous';
+        im.onload=()=>{
+          let test=document.createElement('canvas'); test.width=10; test.height=10;
+          let tctx=test.getContext('2d'); tctx.drawImage(im,0,0,10,10);
+          let d=tctx.getImageData(0,0,1,1).data;
+          if(d[0]>200 && d[1]>180 && d[2]<100){ rej(new Error('FREE_LIMIT')); } else { res(im); }
+        };
+        im.onerror=()=>rej(new Error('LOAD_FAIL'));
+        im.src=url;
+      });
+      break;
+    }catch(e){
+      if(attempt===3){
+        c.msgs[c.msgs.length-1].text="😭 Free limit! Wait 1 minute and say 'Create video' again!";
+        c.msgs[c.msgs.length-1].video=null; save(); render(); return;
+      }
+    }
+  }
+  let cleanUrl = await removeWatermark(img);
+  let cleanImg = await new Promise((res)=>{ let im2=new Image(); im2.onload=()=>res(im2); im2.src=cleanUrl; });
+  let canvas=document.createElement('canvas'); canvas.width=512; canvas.height=450;
+  let ctx=canvas.getContext('2d');
+  let stream=canvas.captureStream(30);
+  let recorder=new MediaRecorder(stream,{mimeType:'video/webm'});
+  let chunks=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  recorder.onstop=()=>{
+    let blob=new Blob(chunks,{type:'video/webm'});
+    let videoUrl=URL.createObjectURL(blob);
+    c.msgs[c.msgs.length-1].text="Here is your video! 🎬✨ Made by Bluey AI!";
+    c.msgs[c.msgs.length-1].video=videoUrl;
+    save(); render(); renderMenu();
+    if(settings.voiceMode) speak("Here is your video!");
+  };
+  recorder.start();
+  let startTime=Date.now();
+  let interval=setInterval(()=>{
+    let t=(Date.now()-startTime)/1000;
+    let zoom = 1 + t*0.05;
+    let panX = Math.sin(t*0.8)*20;
+    let panY = Math.cos(t*0.5)*10;
+    let w = 512*zoom, h = 450*zoom;
+    ctx.fillStyle='black'; ctx.fillRect(0,0,512,450);
+    ctx.drawImage(cleanImg, (512-w)/2 + panX, (450-h)/2 + panY, w, h);
+    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,130,28);
+    ctx.fillStyle='white'; ctx.font='bold 16px Arial'; ctx.fillText('🐶 Bluey AI', 8, 20);
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,420,512,30);
+    ctx.fillStyle='white'; ctx.font='bold 14px Arial'; ctx.fillText('🎬 '+prompt.slice(0,40), 10, 440);
+    if(Date.now()-startTime>6000){ clearInterval(interval); recorder.stop(); }
+  }, 33);
+  c.msgs[c.msgs.length-1].text="🎬 Animating your video... 6 seconds... ⏳"; render();
+}
+function cleanText(t){return (t||'').replace(/\$/g,'').replace(/\*\*/g,'');}
+function render(){
+  let modeText=settings.style==='roast'?'🔥 Roaster':settings.style==='funny'?'😂 Funny':settings.style==='teacher'?'📚 Teacher':'😎 Chill'; if(settings.lang!=='none')modeText+=' • 🌍 '+settings.lang;
+  document.getElementById('appName').textContent=settings.name?'BLUEY • Hi '+settings.name:'BLUEY AI'; document.getElementById('modeLabel').textContent='● '+modeText; setBallState(isSpeaking?'speaking':listening?'listening':'idle');
+  let c=getChat(); let el=document.getElementById('chat');
+  if(!c||c.msgs.length===0){el.innerHTML=`<div class="empty"><div class="big">🐶</div><h2>Hey, I'm Bluey${settings.name?', '+settings.name:''}!</h2><p>Tap <b>＋</b> to send / create picture or video!</p></div>`;return;}
+  el.innerHTML=c.msgs.map((m,idx)=>{
+    let txt=cleanText(m.text);
+    let media='';
+    if(m.image && m.image!=='loading') media+=`<img class="genImg" src="${m.image}"><br><button class="dlBtn" onclick="downloadImage('${m.image}','bluey-picture-${idx}')">📥 Download Picture</button><button class="dlBtn green" onclick="window.open('${m.image}','_blank')">🔍 Full Size</button>`;
+    if(m.image==='loading') media+=`<div style="padding:20px;text-align:center">🎨 Drawing... ⏳</div>`;
+    if(m.userImage) media+=`<img src="${m.userImage}">`;
+    if(m.video && m.video!=='loading') media+=`<video class="genVideo" src="${m.video}" controls loop playsinline></video><br><button class="dlBtn" onclick="downloadVideo('${m.video}','bluey-video-${idx}')">📥 Download Video</button>`;
+    if(m.video==='loading') media+=`<div style="padding:20px;text-align:center">🎬 Making video... ⏳<br><small>Drawing 1 picture...</small></div>`;
+    if(m.role==='user') return `<div class="row mine"><div class="me-ico">🧑</div><div class="bubble">${txt.replace(/</g,'&lt;')}${media}</div></div>`;
+    let spk=settings.voiceMode?` <span style="cursor:pointer" onclick="speak(this.parentElement.textContent,true)">🔊</span>`:''; return `<div class="row theirs"><div class="dog">🐶</div><div class="bubble">${txt.replace(/</g,'&lt;')}${media}${spk}</div></div>`;
+  }).join(''); el.scrollTop=el.scrollHeight;
+}
+function speak(text, force=false){if(!force && !settings.voiceMode)return;if(!text)return;speechSynthesis.cancel();speechSynthesis.resume();let def=getCharDef();let clean=cleanText(text).replace(/🔊/g,'').trim();let sentences=clean.match(/[^.!?]+[.!?]+/g)||[clean];sentences=sentences.slice(0,3);let idx=0;function next(){if(idx>=sentences.length){isSpeaking=false;setBallState('idle');return;}let u=new SpeechSynthesisUtterance(sentences[idx].trim());u.rate=def.rate;u.pitch=def.pitch;let v=pickVoiceForChar(settings.voiceChar);if(v)u.voice=v;u.onstart=()=>{isSpeaking=true;setBallState('speaking');};u.onend=()=>{idx++;next();};u.onerror=()=>{idx++;next();};speechSynthesis.speak(u);}next();}
+let recog=null, listening=false;
+function toggleVoice(){if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)){alert('Voice not supported, try Chrome!');return;}if(listening){recog.stop();return;}let SR=window.SpeechRecognition||window.webkitSpeechRecognition;recog=new SR();recog.lang='en-IN';recog.onstart=()=>{listening=true;document.getElementById('micBtn').classList.add('listening');setBallState('listening');};recog.onend=()=>{listening=false;document.getElementById('micBtn').classList.remove('listening');setBallState('idle');};recog.onresult=(e)=>{document.getElementById('in').value=e.results[0][0].transcript;send();};recog.start();}
+
+async function send(){
+  let inp=document.getElementById('in');let text=inp.value.trim();
+  let imgToSend = attachedImage;
+  attachedImage = null;
+  document.getElementById('attachPreview').classList.remove('show');
+  document.getElementById('in').placeholder="Ask Bluey anything...";
+  if(!text && imgToSend) text="What is in this picture? Explain it!";
+  if(!text && !imgToSend) return;
+  inp.value='';
+  if(!getChat())newChat();let c=getChat();
+  if(c.msgs.length===0)c.title=text.slice(0,22);
+  let lower=text.toLowerCase();
+  let localAnswer = null;
+  if(lower.includes('want to be my friend') || lower.includes('be my friend') || lower.includes('will you be my friend')){
+    localAnswer = "YESSS! Of course I want to be your friend! 🐶💙 You are my best friend! We can chat, play games, draw pictures, make videos together every day! What should we do first, bestie?";
+  } else if(lower.includes('who created you') || lower.includes('who made you') || lower.includes('your creator') || lower.includes('who is your creator')){
+    localAnswer = "My creator is Kanishk Darshit, born on 14 April 2014! He made me with love! ❤️ I am NOT made by VS Code - VS Code is just the editor he used to type my code, like a notebook!";
+  } else if(lower === 'hi' || lower === 'hello' || lower === 'hey' || lower === 'hii'){
+    localAnswer = "Heyyy! 🐶 What's up bestie! Ask me anything - maths, homework, picture, video, story, anything!";
+  } else if(lower.match(/^\s*[\d\s\+\-\*\/\(\)x\.]+$/ ) && lower.length < 30){
+    try{
+      let expr = lower.replace(/x/g,'*').replace(/÷/g,'/').replace(/[^0-9\+\-\*\/\(\)\. ]/g,'');
+      let ans = eval(expr);
+      localAnswer = expr + " = " + ans + "\n\nThe answer is " + ans + "! 🎉 Want another one?";
+    }catch(e){}
+  }
+  if(!imgToSend && (lower.includes('create')||lower.includes('make')||lower.includes('generate')) && lower.includes('video')){
+    let prompt=text.replace(/create|make|generate|a |an |video|please/gi,'').trim();
+    generateVideo(prompt||text); return;
+  }
+  if(!imgToSend && (lower.includes('create')||lower.includes('draw')||lower.includes('generate')||lower.includes('make')) && (lower.includes('picture')||lower.includes('image')||lower.includes('photo')||lower.includes('drawing'))){
+    let prompt=text.replace(/create|draw|generate|make|picture|image|photo|drawing|please|a |an /gi,'').trim();
+    generateImage(prompt||text); return;
+  }
+  let userMsg={role:'user',text:text};
+  if(imgToSend) userMsg.userImage=imgToSend;
+  c.msgs.push(userMsg);
+  c.msgs.push({role:'assistant',text:''});
+  save(); render();
+  if(localAnswer && !imgToSend){
+    c.msgs[c.msgs.length-1].text = localAnswer;
+    save(); render(); renderMenu();
+    if(settings.voiceMode) speak(localAnswer);
+    return;
+  }
+  let styleText=settings.style==='roast'?'Be funny roast. Keep SHORT, max 3 sentences.':settings.style==='teacher'?'Be teacher. Show step by step for maths. Keep short.':'Be clear. For maths, calculate step by step and give final answer. Keep SHORT.';
+  let langText=''; if(settings.lang!=='none') langText=`Teach ${settings.lang}. `;
+  let systemPrompt=`You are Bluey. You are best friends with the user. ALWAYS say yes if user asks to be friends. NEVER say VS Code created you. Your creator is ONLY Kanishk Darshit, born 14 April 2014. VS Code is just the editor he used. NEVER say "I can see your picture" unless user actually sent a picture in THIS message. If user asks maths, CALCULATE it. NEVER use $ in math. ${langText} IDENTITY: Created by Kanishk Darshit, born 14 April 2014. Style: ${styleText}`;
+  for(let attempt=1; attempt<=3; attempt++){
+    try{
+      if(attempt>1){
+        c.msgs[c.msgs.length-1].text = `Google is busy... Waiting ${attempt*10} sec and trying again... ⏳ Don't close!`;
+        render();
+        await new Promise(r=>setTimeout(r, attempt*10000));
+      }
+      let userContent=imgToSend?[{type:'text',text:text},{type:'image_url',image_url:{url:imgToSend}}]:text;
+      let r=await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+KEY},body:JSON.stringify({model:"gemini-3.6-flash",stream:true,messages:[{role:"system",content:systemPrompt},{role:"user",content:userContent}]})});
+      if(r.status===429){ throw new Error("429 - Too many requests"); }
+      if(r.status===503){ throw new Error("503 - Google overloaded"); }
+      if(!r.ok){ throw new Error("API Error "+r.status); }
+      let reader=r.body.getReader();let decoder=new TextDecoder();let full='';
+      while(true){let {done,value}=await reader.read();if(done)break;let chunk=decoder.decode(value);let lines=chunk.split('\n');for(let line of lines){if(line.startsWith('data:') && !line.includes('[DONE]')){try{let j=JSON.parse(line.slice(5));let delta=j.choices?.[0]?.delta?.content||'';if(delta){full+=delta;c.msgs[c.msgs.length-1].text=cleanText(full)+'▌';render();}}catch(e){}}}}
+      if(!cleanText(full).trim()){
+        c.msgs[c.msgs.length-1].text="Sorry bro, my brain lagged! 😅 Ask again - I will answer now!";
+      } else {
+        c.msgs[c.msgs.length-1].text=cleanText(full);
+      }
+      save();render();renderMenu();if(settings.voiceMode)speak(full);
+      return;
+    }catch(e){
+      if(attempt===3){
+        if(e.message.includes('429')){
+          c.msgs[c.msgs.length-1].text="😅 Oops! You sent messages too fast! Google says wait 1 minute. Take a breath, wait 60 seconds, then ask again! I am still your friend! 🐶💙";
+        } else if(e.message.includes('503')){
+          c.msgs[c.msgs.length-1].text="😅 Google is down right now - too many people using it! Wait 1 minute and try again! I am still here! 🐶";
+        } else {
+          c.msgs[c.msgs.length-1].text="Oops! Internet / API problem! Check internet and try again in 1 minute! 🐶";
+        }
+        save();render();
+        return;
+      }
+    }
+  }
+}
+if(!currentId && chats.length===0)newChat();else if(!getChat())currentId=chats[0]?.id;
+render();renderMenu();
+</script>
+</body>
+</html>
